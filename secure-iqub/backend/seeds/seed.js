@@ -19,7 +19,7 @@
  *   All 12 slots × $2,000 = $24,000/month ✓
  */
 
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -95,10 +95,11 @@ async function seed() {
     { firstName: 'Liya', lastName: 'Haile',     email: 'liya@demo.com' },
   ];
 
+  const hashedMemberPassword = await bcrypt.hash('Member@1234', saltRounds);
   const members = await User.insertMany(
     memberData.map((m) => ({
       ...m,
-      password: 'Member@1234',
+      password: hashedMemberPassword,
       role: 'member',
       isEmailVerified: true,
       isActive: true,

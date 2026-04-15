@@ -45,8 +45,8 @@ import { ToastService } from '../../../core/services/toast.service';
 
             <mat-form-field appearance="outline">
               <mat-label>Platform Fee %</mat-label>
-              <input matInput type="number" formControlName="platformFeePercent" min="0" max="10" />
-              <mat-hint>Optional platform deduction before payout</mat-hint>
+              <input matInput type="number" [value]="platformFeePercent" readonly />
+              <mat-hint>Set by Super Admin — read only</mat-hint>
             </mat-form-field>
           </div>
 
@@ -92,6 +92,7 @@ import { ToastService } from '../../../core/services/toast.service';
 export class CreateGroupComponent implements OnInit {
   form!: FormGroup;
   loading = false;
+  platformFeePercent = 0;
   dueDays = Array.from({ length: 28 }, (_, i) => i + 1);
 
   constructor(private fb: FormBuilder, private api: ApiService, private router: Router, private toast: ToastService) {}
@@ -101,7 +102,9 @@ export class CreateGroupComponent implements OnInit {
       name: ['', [Validators.required, Validators.maxLength(100)]],
       description: [''],
       dueDay: [1, Validators.required],
-      platformFeePercent: [0, [Validators.min(0), Validators.max(100)]],
+    });
+    this.api.getAdminPlatformSettings().subscribe({
+      next: (res) => { this.platformFeePercent = res.data?.platformFeePercent ?? 0; },
     });
   }
 
@@ -112,7 +115,7 @@ export class CreateGroupComponent implements OnInit {
   onSubmit(): void {
     if (this.form.invalid) { this.form.markAllAsTouched(); return; }
     this.loading = true;
-    this.api.createGroup(this.form.value).subscribe({
+    this.api.createGroup({ ...this.form.value, platformFeePercent: this.platformFeePercent }).subscribe({
       next: (res) => {
         this.toast.success('Group created! Now add slots.');
         this.router.navigate(['/admin/groups', res.data._id, 'slots']);

@@ -52,6 +52,9 @@ export class ApiService {
   getSpinHistory(groupId: string): Observable<ApiResponse> { return this.http.get<ApiResponse>(`${this.base}/admin/groups/${groupId}/spin-history`); }
   getEligibleSlots(groupId: string): Observable<ApiResponse> { return this.http.get<ApiResponse>(`${this.base}/admin/groups/${groupId}/eligible-slots`); }
 
+  // ── Admin Settings (read-only) ─────────────────────────────────────────────
+  getAdminPlatformSettings(): Observable<ApiResponse> { return this.http.get<ApiResponse>(`${this.base}/admin/settings`); }
+
   // ── Super Admin ────────────────────────────────────────────────────────────
   getPlatformAnalytics(): Observable<ApiResponse> { return this.http.get<ApiResponse>(`${this.base}/super-admin/analytics`); }
   createAdmin(data: any): Observable<ApiResponse> { return this.http.post<ApiResponse>(`${this.base}/super-admin/admins`, data); }

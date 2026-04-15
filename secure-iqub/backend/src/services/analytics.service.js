@@ -65,7 +65,13 @@ const getAdminGroupAnalytics = async (groupId) => {
   const approvedPayments = payments.filter((p) => p.status === PAYMENT_STATUS.APPROVED);
   const collectedThisMonth = approvedPayments.reduce((s, p) => s + p.submittedAmount, 0);
   const lateMembers = payments.filter((p) => p.timeliness === PAYMENT_TIMELINESS.LATE).length;
-  const totalPenalties = payments.reduce((s, p) => s + (p.penaltyWaived ? 0 : p.penaltyAmount), 0);
+  const onTimeMembers = payments.filter((p) => p.timeliness === PAYMENT_TIMELINESS.ON_TIME).length;
+
+  // All-cycle penalty pool (penalties are the on-time award source)
+  const allPayments = await Payment.find({ group: groupId });
+  const penaltyAwardPool = allPayments.reduce((s, p) => s + (p.penaltyWaived ? 0 : p.penaltyAmount), 0);
+  const totalPenalties = penaltyAwardPool;
+  const awardPerOnTimeMember = onTimeMembers > 0 ? Math.round(penaltyAwardPool / onTimeMembers) : 0;
 
   return {
     groupName: group.name,
@@ -78,7 +84,10 @@ const getAdminGroupAnalytics = async (groupId) => {
     collectedThisMonth,
     remainingThisMonth: group.monthlyPool - collectedThisMonth,
     lateMembers,
+    onTimeMembers,
     totalPenalties,
+    penaltyAwardPool,
+    awardPerOnTimeMember,
     recentWinners: spinResults,
     completionPercent: Math.round((wonSlots / group.slotCount) * 100),
   };
@@ -101,6 +110,14 @@ const getMemberDashboard = async (memberId) => {
       const totalPenalties = payments.reduce((s, p) => s + (p.penaltyWaived ? 0 : p.penaltyAmount), 0);
       const onTimeCount = payments.filter((p) => p.timeliness === PAYMENT_TIMELINESS.ON_TIME).length;
 
+      // Penalty award pool: total group penalties / on-time member count = this member's award share
+      const groupPayments = await Payment.find({ group: c.group._id });
+      const groupPenaltyPool = groupPayments.reduce((s, p) => s + (p.penaltyWaived ? 0 : p.penaltyAmount), 0);
+      const groupOnTimeCount = groupPayments.filter((p) => p.timeliness === PAYMENT_TIMELINESS.ON_TIME).length;
+      const awardEarned = onTimeCount > 0 && groupOnTimeCount > 0
+        ? Math.round((onTimeCount / groupOnTimeCount) * groupPenaltyPool)
+        : 0;
+
       const slotWon = c.slot.status === SLOT_STATUS.WON;
       const payoutDistrib = slotWon
         ? await PayoutDistribution.findOne({ member: memberId, slot: c.slot._id })
@@ -116,6 +133,8 @@ const getMemberDashboard = async (memberId) => {
         totalPenalties,
         onTimePayments: onTimeCount,
         totalPayments: payments.length,
+        groupPenaltyPool,
+        awardEarned,
         slotWon,
         wonInMonth: c.slot.wonInMonth,
         actualPayout: payoutDistrib ? payoutDistrib.payoutAmount : null,

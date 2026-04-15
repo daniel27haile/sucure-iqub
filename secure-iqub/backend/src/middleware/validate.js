@@ -20,7 +20,7 @@ const validate = (schema, source = 'body') => {
         field: d.path.join('.'),
         message: d.message.replace(/['"]/g, ''),
       }));
-      return badRequest(res, 'Validation failed', errors);
+return badRequest(res, 'Validation failed', errors);
     }
 
     req[source] = value; // replace with sanitized/coerced value

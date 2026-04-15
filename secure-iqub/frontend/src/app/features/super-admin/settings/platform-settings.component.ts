@@ -37,19 +37,18 @@ import { ToastService } from '../../../core/services/toast.service';
           </mat-form-field>
 
           <mat-divider></mat-divider>
-          <h3>Award & Incentive</h3>
+          <h3>On-Time Award</h3>
           <div class="toggle-row">
-            <span>Enable On-Time Award Badge</span>
+            <span>Enable On-Time Award</span>
             <mat-select formControlName="awardBadgeEnabled" class="toggle-select">
               <mat-option [value]="true">Enabled</mat-option>
               <mat-option [value]="false">Disabled</mat-option>
             </mat-select>
           </div>
-          <mat-form-field appearance="outline">
-            <mat-label>On-Time % Required for Award</mat-label>
-            <input matInput type="number" formControlName="awardThresholdOnTimePercent" min="0" max="100" />
-            <mat-hint>Members must reach this on-time payment percentage to earn award</mat-hint>
-          </mat-form-field>
+          <div class="info-box">
+            <mat-icon>info</mat-icon>
+            <span>When enabled, the total penalty fees collected from late-paying members are distributed equally among all on-time members at the end of the cycle as their reward.</span>
+          </div>
 
           <mat-divider></mat-divider>
           <h3>Spin Eligibility</h3>
@@ -81,6 +80,7 @@ import { ToastService } from '../../../core/services/toast.service';
     mat-form-field { max-width: 360px; }
     .toggle-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; max-width: 360px; }
     .toggle-select { width: 140px; }
+    .info-box { display: flex; align-items: flex-start; gap: 8px; background: #e8eaf6; padding: 12px; border-radius: 8px; color: #3949ab; font-size: 13px; max-width: 480px; }
     .form-actions { margin-top: 8px; }
   `],
 })
@@ -96,7 +96,6 @@ export class PlatformSettingsComponent implements OnInit {
       penaltyPerDay: [20, [Validators.required, Validators.min(0)]],
       platformFeePercent: [0, [Validators.min(0), Validators.max(100)]],
       awardBadgeEnabled: [true],
-      awardThresholdOnTimePercent: [100, [Validators.min(0), Validators.max(100)]],
       spinEligibilityRule: ['all_approved'],
     });
 

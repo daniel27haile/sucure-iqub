@@ -207,7 +207,7 @@ export class MonthlyCollectionComponent implements OnInit {
     if (this.paymentForm.invalid) return;
     const data = { ...this.paymentForm.value, monthNumber: this.selectedMonth };
     this.api.submitPayment(this.groupId, data).subscribe({
-      next: () => { this.toast.success('Payment recorded'); this.loadPayments(); this.paymentForm.reset({ monthNumber: this.selectedMonth }); },
+      next: () => { this.toast.success('Payment recorded'); this.loadPayments(); this.paymentForm.reset({ monthNumber: this.selectedMonth, notes: '' }); },
       error: (err) => { this.toast.error(err.error?.message || 'Failed to record payment'); },
     });
   }

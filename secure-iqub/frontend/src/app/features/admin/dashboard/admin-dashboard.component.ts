@@ -51,6 +51,10 @@ import { Group } from '../../../core/models/group.model';
                 <div class="stat-val">{{ analytics[group._id].eligibleSlots }}</div>
                 <div class="stat-lbl">Eligible Slots</div>
               </div>
+              <div class="stat" *ngIf="analytics[group._id].penaltyAwardPool > 0">
+                <div class="stat-val text-green">$ {{ analytics[group._id].penaltyAwardPool | number }}</div>
+                <div class="stat-lbl">On-Time Award Pool</div>
+              </div>
             </div>
 
             <!-- Progress bar -->

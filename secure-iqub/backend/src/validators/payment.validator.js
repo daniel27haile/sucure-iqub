@@ -8,11 +8,11 @@ const submitPaymentSchema = Joi.object({
   submittedAmount: Joi.number().min(1).required(),
   proofUrl: Joi.string().uri().optional(),
   proofFileName: Joi.string().optional(),
-  notes: Joi.string().max(500).optional(),
+  notes: Joi.string().max(500).allow('', null).optional(),
 });
 
 const approvePaymentSchema = Joi.object({
-  adminNotes: Joi.string().max(500).optional(),
+  adminNotes: Joi.string().max(500).allow('', null).optional(),
 });
 
 const rejectPaymentSchema = Joi.object({

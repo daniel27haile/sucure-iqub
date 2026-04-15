@@ -2,6 +2,7 @@
 
 const router = require('express').Router();
 const ctrl = require('../controllers/admin.controller');
+const superAdminCtrl = require('../controllers/superadmin.controller');
 const { authenticate } = require('../middleware/auth');
 const { isAdmin } = require('../middleware/roleGuard');
 const validate = require('../middleware/validate');
@@ -10,6 +11,9 @@ const { submitPaymentSchema, approvePaymentSchema, rejectPaymentSchema } = requi
 
 // All admin routes require authentication + admin role
 router.use(authenticate, isAdmin);
+
+// ── Platform Settings (read-only for admin) ───────────────────────────────────
+router.get('/settings', superAdminCtrl.getPlatformSettings);
 
 // ── Groups ────────────────────────────────────────────────────────────────────
 router.post('/groups', validate(createGroupSchema), ctrl.createGroup);

@@ -148,7 +148,7 @@ const listGroupMembers = async (req, res, next) => {
 
 const submitPayment = async (req, res, next) => {
   try {
-    const payment = await paymentService.submitPayment(req.params.groupId, req.user._id, req.body, req);
+const payment = await paymentService.submitPayment(req.params.groupId, req.user._id, req.body, req);
     return created(res, payment, 'Payment submitted');
   } catch (err) { next(err); }
 };

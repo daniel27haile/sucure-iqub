@@ -61,6 +61,10 @@ import { ApiService } from '../../../core/services/api.service';
                 <div class="mstat-val">$ {{ m.expectedTotalPayout | number }}</div>
                 <div class="mstat-lbl">{{ m.slotWon ? 'My Payout 🏆' : 'Expected Payout' }}</div>
               </div>
+              <div class="mstat mstat--award" *ngIf="m.awardEarned > 0">
+                <div class="mstat-val">$ {{ m.awardEarned | number }}</div>
+                <div class="mstat-lbl">On-Time Award</div>
+              </div>
             </div>
 
             <!-- Won notification -->
@@ -109,6 +113,8 @@ import { ApiService } from '../../../core/services/api.service';
     .mstat-val { font-size: 18px; font-weight: 700; color: #1a237e; }
     .mstat-lbl { font-size: 11px; color: #888; margin-top: 2px; }
     .mstat--win .mstat-val { color: #2e7d32; }
+    .mstat--award .mstat-val { color: #e65100; }
+    .mstat--award .mstat-lbl::before { content: '🏅 '; }
     .won-banner { display: flex; align-items: flex-start; gap: 12px; background: linear-gradient(135deg, #e8f5e9, #f1f8e9); border: 1px solid #a5d6a7; border-radius: 8px; padding: 14px; margin: 8px 0; color: #1b5e20; }
     .won-banner mat-icon { color: #ffd700; font-size: 28px; width: 28px; height: 28px; flex-shrink: 0; }
     .ontime-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666; margin-top: 8px; }
