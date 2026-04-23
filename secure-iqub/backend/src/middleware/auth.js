@@ -20,7 +20,8 @@ const authenticate = async (req, res, next) => {
 
     const user = await User.findById(decoded.id).select('-password');
     if (!user) return unauthorized(res, 'User no longer exists.');
-    if (!user.isActive) return unauthorized(res, 'Your account has been deactivated. Contact support.');
+    if (user.isDeleted) return unauthorized(res, 'This account has been deleted. Please contact Super Admin.');
+    if (!user.isActive) return unauthorized(res, 'Your account has been suspended. Please contact Super Admin.');
 
     req.user = user;
     next();

@@ -43,6 +43,16 @@ const runSpin = async (groupId, adminId, req) => {
     throw Object.assign(new Error(`Month ${monthNumber} has already been spun`), { statusCode: 409 });
   }
 
+  // Guard: enforce ascending month order — cannot skip months
+  const lastCompletedSpin = await SpinResult.findOne({ group: groupId }).sort('-monthNumber');
+  const expectedMonth = lastCompletedSpin ? lastCompletedSpin.monthNumber + 1 : 1;
+  if (monthNumber !== expectedMonth) {
+    throw Object.assign(
+      new Error(`Cannot spin Month ${monthNumber}. Month ${expectedMonth} must be completed first.`),
+      { statusCode: 400 }
+    );
+  }
+
   // Determine eligible slots
   const eligibleSlots = await getEligibleSlots(groupId, monthNumber);
   if (eligibleSlots.length === 0) {
@@ -58,15 +68,23 @@ const runSpin = async (groupId, adminId, req) => {
   const winnerSlotData = eligibleSlots[randomIndex];
   const winnerSlot = await Slot.findById(winnerSlotData._id);
 
-  // Load winner slot members
+  // Load winner slot members (also populate leader)
   const winnerContributions = await SlotMemberContribution.find({ slot: winnerSlot._id, isActive: true })
     .populate('member', 'firstName lastName email');
+  const populatedWinnerSlot = await Slot.findById(winnerSlot._id).populate('leader', 'firstName lastName');
 
   // Compute payout distribution
   const payoutBreakdown = computePayoutSplit(winnerSlot, winnerContributions, SLOT.PAYOUT_AMOUNT);
 
-  // Snapshot eligible slots for audit
+  // Snapshot eligible slots for audit (includes leader info)
   const eligibleSlotSnapshot = await buildEligibleSnapshot(eligibleSlots);
+
+  // Determine the display label for the winner:
+  // - If a leader is assigned to this slot, use the leader's name as the representative label.
+  // - Otherwise, fall back to the slot label.
+  const leaderName = populatedWinnerSlot.leaderDisplayName
+    || (populatedWinnerSlot.leader ? `${populatedWinnerSlot.leader.firstName} ${populatedWinnerSlot.leader.lastName}` : null);
+  const winnerDisplayLabel = leaderName || winnerSlot.label || `Slot ${winnerSlot.slotNumber}`;
 
   // Create SpinResult
   const spinResult = await SpinResult.create({
@@ -79,7 +97,8 @@ const runSpin = async (groupId, adminId, req) => {
     eligibleSlotCount: eligibleSlots.length,
     winnerSlot: winnerSlot._id,
     winnerSlotNumber: winnerSlot.slotNumber,
-    winnerSlotLabel: winnerSlot.label,
+    // Store the leader name as the display label; full slot label is preserved in winnerSlot reference
+    winnerSlotLabel: winnerDisplayLabel,
     winnerMembers: payoutBreakdown.map((p) => ({
       member: p.memberId,
       name: p.name,
@@ -166,16 +185,36 @@ const runSpin = async (groupId, adminId, req) => {
 
 /**
  * Get fully-funded, eligible (not-yet-won) slots for a given month.
+ * Returns slots populated with leader and member contribution data for spin UI.
  */
 const getEligibleSlots = async (groupId, monthNumber) => {
-  const eligibleSlots = await Slot.find({ group: groupId, status: SLOT_STATUS.ELIGIBLE });
+  const eligibleSlots = await Slot.find({ group: groupId, status: SLOT_STATUS.ELIGIBLE })
+    .populate('leader', 'firstName lastName');
 
   const fullyFundedSlots = [];
   for (const slot of eligibleSlots) {
     const payments = await Payment.find({ slot: slot._id, monthNumber, status: PAYMENT_STATUS.APPROVED });
     const total = payments.reduce((sum, p) => sum + p.submittedAmount, 0);
     if (total >= slot.requiredMonthlyAmount) {
-      fullyFundedSlots.push(slot);
+      // Include member contributions so the spin UI can show member names
+      const contribs = await SlotMemberContribution.find({ slot: slot._id, isActive: true })
+        .populate('member', 'firstName lastName');
+
+      const leaderName = slot.leaderDisplayName
+        || (slot.leader ? `${slot.leader.firstName} ${slot.leader.lastName}` : null);
+
+      fullyFundedSlots.push({
+        ...slot.toObject(),
+        leaderDisplayName: leaderName,
+        displayLabel: leaderName || slot.label || `Slot ${slot.slotNumber}`,
+        members: contribs.map((c) => ({
+          _id: c._id,
+          member: c.member,
+          monthlyAmount: c.monthlyAmount,
+          sharePercent: c.sharePercent,
+          isLeader: slot.leader && slot.leader._id.toString() === c.member._id.toString(),
+        })),
+      });
     }
   }
 
@@ -228,17 +267,29 @@ const computePayoutSplit = (slot, contributions, totalPayout) => {
 const buildEligibleSnapshot = async (slots) => {
   return Promise.all(
     slots.map(async (slot) => {
-      const contribs = await SlotMemberContribution.find({ slot: slot._id, isActive: true })
-        .populate('member', 'firstName lastName');
+      const [contribs, populatedSlot] = await Promise.all([
+        SlotMemberContribution.find({ slot: slot._id, isActive: true })
+          .populate('member', 'firstName lastName'),
+        Slot.findById(slot._id).populate('leader', 'firstName lastName'),
+      ]);
+
+      const leaderName = populatedSlot.leaderDisplayName
+        || (populatedSlot.leader ? `${populatedSlot.leader.firstName} ${populatedSlot.leader.lastName}` : null);
+
       return {
         slot: slot._id,
         slotNumber: slot.slotNumber,
         label: slot.label,
+        // The leader name is the representative display name for this slot during spin
+        leaderDisplayName: leaderName,
+        displayLabel: leaderName || slot.label || `Slot ${slot.slotNumber}`,
+        leaderId: populatedSlot.leader ? populatedSlot.leader._id : null,
         members: contribs.map((c) => ({
           member: c.member._id,
           name: `${c.member.firstName} ${c.member.lastName}`,
           monthlyAmount: c.monthlyAmount,
           sharePercent: c.sharePercent,
+          isLeader: populatedSlot.leader && populatedSlot.leader._id.toString() === c.member._id.toString(),
         })),
       };
     })

@@ -14,6 +14,7 @@ const logger = require('./src/utils/logger');
 
 // Route imports
 const authRoutes = require('./src/routes/auth.routes');
+const publicRoutes = require('./src/routes/public.routes');
 const superAdminRoutes = require('./src/routes/superadmin.routes');
 const adminRoutes = require('./src/routes/admin.routes');
 const memberRoutes = require('./src/routes/member.routes');
@@ -72,6 +73,7 @@ app.get('/health', (req, res) => {
 
 // ── API Routes ────────────────────────────────────────────────────────────────
 app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/public', publicRoutes);      // no auth required (leader applications, etc.)
 app.use('/api/super-admin', superAdminRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/member', memberRoutes);

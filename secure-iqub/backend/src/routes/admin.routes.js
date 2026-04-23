@@ -32,17 +32,27 @@ router.delete('/groups/:groupId/slots/:slotId/members/:memberId', ctrl.removeMem
 
 // ── Members ───────────────────────────────────────────────────────────────────
 router.post('/members/invite', ctrl.inviteMember);
+router.get('/members', ctrl.listAllMembers);
 router.get('/groups/:groupId/members', ctrl.listGroupMembers);
 
 // ── Payments ──────────────────────────────────────────────────────────────────
 router.post('/groups/:groupId/payments', validate(submitPaymentSchema), ctrl.submitPayment);
 router.get('/groups/:groupId/payments', ctrl.getMonthlyPayments);
+router.get('/groups/:groupId/payment-summary', ctrl.getPaymentSummary);
 router.patch('/payments/:paymentId/approve', validate(approvePaymentSchema), ctrl.approvePayment);
 router.patch('/payments/:paymentId/reject', validate(rejectPaymentSchema), ctrl.rejectPayment);
+
+// ── Slot leader & payout preview ──────────────────────────────────────────────
+router.patch('/groups/:groupId/slots/:slotId/leader', ctrl.setSlotLeader);
+router.get('/groups/:groupId/slots/:slotId/payout-preview', ctrl.getSlotPayoutPreview);
 
 // ── Spin ──────────────────────────────────────────────────────────────────────
 router.post('/groups/:groupId/spin', ctrl.runSpin);
 router.get('/groups/:groupId/spin-history', ctrl.getSpinHistory);
 router.get('/groups/:groupId/eligible-slots', ctrl.getEligibleSlots);
+
+// ── Dashboard ─────────────────────────────────────────────────────────────────
+router.get('/dashboard/summary', ctrl.getDashboardSummary);
+router.post('/dashboard/dismiss-welcome', ctrl.dismissWelcomeCard);
 
 module.exports = router;

@@ -52,6 +52,9 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
               <button mat-icon-button color="warn" (click)="suspendGroup(g)" *ngIf="g.status === 'active'" matTooltip="Suspend Group">
                 <mat-icon>pause_circle</mat-icon>
               </button>
+              <button mat-icon-button color="primary" (click)="reactivateGroup(g)" *ngIf="g.status === 'suspended'" matTooltip="Reactivate Group">
+                <mat-icon>play_circle</mat-icon>
+              </button>
             </td>
           </ng-container>
           <tr mat-header-row *matHeaderRowDef="cols"></tr>
@@ -98,6 +101,19 @@ export class AllGroupsComponent implements OnInit {
         this.api.suspendGroup(group._id, { reason }).subscribe({
           next: () => { this.toast.warning('Group suspended'); this.loadGroups(); },
           error: (err) => { this.toast.error(err.error?.message || 'Failed'); },
+        });
+      }
+    });
+  }
+
+  reactivateGroup(group: any): void {
+    this.dialog.open(ConfirmDialogComponent, {
+      data: { title: 'Reactivate Group', message: `Reactivate <strong>${group.name}</strong>? This will restore the group to active status.`, confirmLabel: 'Reactivate' },
+    }).afterClosed().subscribe((ok) => {
+      if (ok) {
+        this.api.reactivateGroup(group._id).subscribe({
+          next: () => { this.toast.success('Group reactivated'); this.loadGroups(); },
+          error: (err) => { this.toast.error(err.error?.message || 'Failed to reactivate'); },
         });
       }
     });

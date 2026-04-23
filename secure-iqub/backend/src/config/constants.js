@@ -55,6 +55,15 @@ module.exports = {
     SPIN_COMPLETE: 'spin_complete',
   },
 
+  // Status values for leader/admin applications submitted from the landing page
+  ADMIN_REQUEST_STATUS: {
+    NEW: 'new',               // just submitted, not yet reviewed
+    CONTACTED: 'contacted',   // super admin has reached out
+    APPROVED: 'approved',     // approved; admin account will be / has been created
+    REJECTED: 'rejected',     // not approved
+    CONVERTED: 'converted',   // admin account created; request fully processed
+  },
+
   AUDIT_ACTIONS: {
     USER_LOGIN: 'user_login',
     USER_REGISTER: 'user_register',
@@ -63,9 +72,11 @@ module.exports = {
     GROUP_UPDATED: 'group_updated',
     GROUP_ACTIVATED: 'group_activated',
     GROUP_SUSPENDED: 'group_suspended',
+    GROUP_REACTIVATED: 'group_reactivated',
     SLOT_CREATED: 'slot_created',
     SLOT_UPDATED: 'slot_updated',
     SLOT_MEMBER_ASSIGNED: 'slot_member_assigned',
+    SLOT_LEADER_ASSIGNED: 'slot_leader_assigned',
     PAYMENT_SUBMITTED: 'payment_submitted',
     PAYMENT_APPROVED: 'payment_approved',
     PAYMENT_REJECTED: 'payment_rejected',
@@ -74,6 +85,13 @@ module.exports = {
     PAYOUT_RECORDED: 'payout_recorded',
     PLATFORM_SETTING_UPDATED: 'platform_setting_updated',
     ADMIN_CREATED: 'admin_created',
+    ADMIN_UPDATED: 'admin_updated',
+    ADMIN_DELETED: 'admin_deleted',
+    ADMIN_REQUEST_SUBMITTED: 'admin_request_submitted',
+    ADMIN_REQUEST_STATUS_CHANGED: 'admin_request_status_changed',
+    ADMIN_REQUEST_APPROVED: 'admin_request_approved',
+    ADMIN_REQUEST_REJECTED: 'admin_request_rejected',
+    WELCOME_EMAIL_SENT: 'welcome_email_sent',
     MEMBER_INVITED: 'member_invited',
     PENALTY_APPLIED: 'penalty_applied',
     OVERRIDE_ACTION: 'override_action',

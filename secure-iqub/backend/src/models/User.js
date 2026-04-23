@@ -68,7 +68,29 @@ const userSchema = new mongoose.Schema(
         awardedAt: Date,
       },
     ],
+    // True on first login after being created by Super Admin.
+    // The admin dashboard shows a welcome onboarding card until this is dismissed.
+    firstLogin: {
+      type: Boolean,
+      default: true,
+    },
+    // Whether the welcome email has been sent to this user
+    welcomeEmailSent: {
+      type: Boolean,
+      default: false,
+    },
+    // If this admin was created from a leader/admin application, link back to it
+    sourceRequestId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'AdminRequest',
+      default: null,
+    },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    // Soft delete — deleted admins cannot log in and are hidden from normal lists.
+    // We keep the document so groups / audit logs / payment records remain intact.
+    isDeleted: { type: Boolean, default: false, index: true },
+    deletedAt: { type: Date, default: null },
+    deletedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
   {
     timestamps: true,

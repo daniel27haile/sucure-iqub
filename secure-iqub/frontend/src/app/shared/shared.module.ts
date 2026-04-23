@@ -26,6 +26,8 @@ import { StatCardComponent } from './components/stat-card/stat-card.component';
 import { StatusBadgeComponent } from './components/status-badge/status-badge.component';
 import { LoadingSpinnerComponent } from './components/loading-spinner/loading-spinner.component';
 import { ConfirmDialogComponent } from './components/confirm-dialog/confirm-dialog.component';
+import { LiveClockComponent } from './components/live-clock/live-clock.component';
+import { SiLogoComponent } from './components/si-logo/si-logo.component';
 
 const MATERIAL = [
   MatButtonModule, MatCardModule, MatFormFieldModule, MatInputModule,
@@ -36,6 +38,7 @@ const MATERIAL = [
 
 const COMPONENTS = [
   StatCardComponent, StatusBadgeComponent, LoadingSpinnerComponent, ConfirmDialogComponent,
+  LiveClockComponent, SiLogoComponent,
 ];
 
 @NgModule({

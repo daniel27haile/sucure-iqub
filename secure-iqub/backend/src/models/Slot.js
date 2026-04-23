@@ -84,6 +84,21 @@ const slotSchema = new mongoose.Schema(
       type: Boolean,
       default: false, // locked once cycle is activated
     },
+    // Designated leader for shared slots.
+    // The leader must be one of the members in this slot.
+    // During spin, the leader's name is shown as the representative label.
+    // Payout is still distributed to ALL members based on contribution share.
+    leader: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      default: null,
+    },
+    // Cached leader display name for quick access (avoids extra populate)
+    leaderDisplayName: {
+      type: String,
+      trim: true,
+      default: null,
+    },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   {

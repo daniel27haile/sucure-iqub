@@ -27,6 +27,9 @@ import { Group } from '../../../core/models/group.model';
           <td mat-cell *matCellDef="let g">
             <strong>{{ g.name }}</strong>
             <div class="sub-text">{{ g.description }}</div>
+            <div class="suspended-note" *ngIf="g.status === 'suspended'">
+              <mat-icon>pause_circle</mat-icon> Paused by Super Admin — contact them to reactivate
+            </div>
           </td>
         </ng-container>
         <ng-container matColumnDef="status">
@@ -63,6 +66,8 @@ import { Group } from '../../../core/models/group.model';
     .empty-state { text-align: center; padding: 60px 20px; }
     .empty-state mat-icon { font-size: 64px; width: 64px; height: 64px; color: #bbb; }
     .empty-state h3 { font-size: 20px; margin: 16px 0 16px; color: #444; }
+    .suspended-note { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #c62828; margin-top: 4px; }
+    .suspended-note mat-icon { font-size: 13px; width: 13px; height: 13px; }
   `],
 })
 export class GroupListComponent implements OnInit {

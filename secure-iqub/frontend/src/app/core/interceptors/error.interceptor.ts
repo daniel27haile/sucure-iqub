@@ -16,7 +16,13 @@ export class ErrorInterceptor implements HttpInterceptor {
           this.auth.logout();
           this.toast.error('Session expired. Please log in again.');
         } else if (error.status === 403) {
-          this.toast.error('Access denied.');
+          // Skip toast on the login endpoint — the login component shows the inline error itself
+          if (!req.url.includes('/auth/login')) {
+            const msg = error.error?.message || '';
+            this.toast.error(msg.toLowerCase().includes('suspended') || msg.toLowerCase().includes('deactivated')
+              ? 'Your account has been suspended. Please contact Super Admin.'
+              : 'Access denied.');
+          }
         } else if (error.status === 0) {
           this.toast.error('Cannot reach server. Check your connection.');
         }

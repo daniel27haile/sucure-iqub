@@ -1,4 +1,4 @@
-# Secure Iqub — Interest-Free Rotating Savings Platform
+# Secure Iqub — Community-Powered Rotating Savings Platform
 
 A production-style MVP built with the MEAN stack (MongoDB · Express.js · Angular · Node.js).
 
@@ -113,7 +113,7 @@ cd secure-iqub/backend
 npm install
 
 # Copy and configure environment variables
-cp .env.example .env
+cp .env
 # Edit .env: set MONGO_URI, JWT_SECRET, etc.
 
 # Seed demo data
@@ -268,3 +268,121 @@ The UUID seed is stored in the SpinResult record for full auditability.
 | Payment timeliness | Day-of-month comparison | Business-specified rules |
 | Slot validation | Pre-activation check | Fail fast before money moves |
 | Payout split | Proportional (default) or custom | Flexible but always audited |
+| Admin request flow | Separate entity → approved → User | Prevents accidental admin creation |
+| Slot leader | Representative only, not financial owner | Separates display from payout logic |
+| Email service | nodemailer + console fallback | Works without SMTP in dev mode |
+
+---
+
+## Admin Request / Leader Application Workflow
+
+```
+Landing Page → "Become an Iqub Leader" button
+  └─> POST /api/public/leader-applications
+        └─> AdminRequest created (status: new)
+              └─> Super Admin reviews
+                    ├─> Mark contacted → (status: contacted)
+                    ├─> Approve → POST /api/super-admin/admin-requests/:id/approve
+                    │     └─> User account created (role: admin, firstLogin: true)
+                    │     └─> Welcome email sent
+                    │     └─> AdminRequest.status = converted
+                    └─> Reject → (status: rejected)
+```
+
+**Key rules:**
+- An AdminRequest is NOT an admin account — it is only an application
+- Only Super Admin can approve and create admin accounts
+- Duplicate pending applications from the same email are blocked
+- A converted request cannot be approved again
+- Temporary password is shown once in the approval response and sent by email
+
+---
+
+## Shared Slot Leader System
+
+A **leader** is a designated representative for a shared slot group.
+
+```
+Shared slot example:
+  Leader = Kalid Ibrahim ($1,000/month = 50%)
+  Member = Saba Tesfay  ($1,000/month = 50%)
+  Total  = $2,000/month ✓
+
+Lucky Spin display:
+  Wheel shows: ⭐ Kalid Ibrahim  (instead of "Slot 11 — Kalid & Saba")
+
+If this slot wins:
+  Total payout = $24,000
+  Kalid gets   = 12 × $1,000 = $12,000  (50%)
+  Saba gets    = 12 × $1,000 = $12,000  (50%)
+```
+
+**Why leader is only a display label:**
+- Avoids confusion: the spin result shows one clear name rather than a list of members
+- Payout is still mathematically split by contribution — no money goes to the leader exclusively
+- The leader is set by the Admin, not chosen by the members
+- Any member in the slot can be designated as the leader
+
+---
+
+## Payout Formula (Per Member)
+
+```
+Monthly contribution × Cycle length = Projected payout
+
+$250/month  → 12 × $250  = $3,000
+$500/month  → 12 × $500  = $6,000
+$1,000/month → 12 × $1,000 = $12,000
+$1,500/month → 12 × $1,500 = $18,000
+$2,000/month → 12 × $2,000 = $24,000 (full slot)
+```
+
+---
+
+## Email System
+
+Configure SMTP in `.env` to enable real email sending:
+
+```env
+EMAIL_HOST=smtp.example.com
+EMAIL_PORT=587
+EMAIL_USER=you@example.com
+EMAIL_PASS=yourpassword
+EMAIL_FROM="Secure Iqub <no-reply@secureiqub.com>"
+```
+
+If `EMAIL_HOST` is not set, the email service falls back to **console logging** — the app works normally without a mail server (useful for development).
+
+**Email templates:**
+- `WELCOME_ADMIN` — Sent when Super Admin approves a leader application and creates an admin account
+- `APPLICATION_RECEIVED` — Sent to the applicant immediately after they submit a leader application
+
+---
+
+## New API Endpoints (v2)
+
+### Public (no auth)
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /api/public/leader-applications | Submit leader/admin application |
+
+### Super Admin
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | /api/super-admin/admins | List admins with member/group counts |
+| GET | /api/super-admin/admins/:id | Admin detail + stats + groups |
+| GET | /api/super-admin/admin-requests | List leader applications |
+| GET | /api/super-admin/admin-requests/counts | Request status counts |
+| GET | /api/super-admin/admin-requests/:id | Single application detail |
+| PATCH | /api/super-admin/admin-requests/:id/status | Update status / add notes |
+| POST | /api/super-admin/admin-requests/:id/approve | Approve → create admin account |
+| POST | /api/super-admin/admin-requests/:id/reject | Reject application |
+| POST | /api/super-admin/admin-requests/:id/send-welcome-email | Resend welcome email |
+
+### Admin
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| PATCH | /api/admin/groups/:id/slots/:slotId/leader | Set slot leader |
+| GET | /api/admin/groups/:id/slots/:slotId/payout-preview | Slot payout breakdown |
+| GET | /api/admin/dashboard/summary | Dashboard summary + firstLogin flag |
+| POST | /api/admin/dashboard/dismiss-welcome | Dismiss onboarding welcome card |

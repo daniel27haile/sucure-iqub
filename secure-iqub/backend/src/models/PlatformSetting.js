@@ -17,6 +17,7 @@ const platformSettingSchema = new mongoose.Schema(
     defaultSlotAmount: { type: Number, default: 2000 },
     defaultCycleLength: { type: Number, default: 12 },
     defaultDueDay: { type: Number, default: 1 },
+    collectionWindowDays: { type: Number, default: 3 }, // days 1-N of each month are "on-time"
     // Configurable spin eligibility rule:
     // 'all_approved' = all slot member payments must be APPROVED for slot to spin
     // 'slot_funded' = slot total collected must equal $2,000 (more lenient)

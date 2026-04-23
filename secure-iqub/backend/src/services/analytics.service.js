@@ -6,7 +6,9 @@ const User = require('../models/User');
 const Payment = require('../models/Payment');
 const SpinResult = require('../models/SpinResult');
 const PayoutDistribution = require('../models/PayoutDistribution');
+const MonthlyCycle = require('../models/MonthlyCycle');
 const { PAYMENT_STATUS, PAYMENT_TIMELINESS, CYCLE, SLOT_STATUS, ROLES } = require('../config/constants');
+const { getMonthName, getCollectionWindowStatus } = require('../utils/dateUtils');
 
 // ── Super Admin analytics ─────────────────────────────────────────────────────
 
@@ -54,10 +56,11 @@ const getAdminGroupAnalytics = async (groupId) => {
 
   const monthNumber = group.currentMonth;
 
-  const [slots, payments, spinResults] = await Promise.all([
+  const [slots, payments, spinResults, currentMonthlyCycle] = await Promise.all([
     Slot.find({ group: groupId }),
     Payment.find({ group: groupId, monthNumber }),
     SpinResult.find({ group: groupId }).sort('-monthNumber').limit(5),
+    monthNumber ? MonthlyCycle.findOne({ group: groupId, monthNumber }) : Promise.resolve(null),
   ]);
 
   const eligibleSlots = slots.filter((s) => s.status === SLOT_STATUS.ELIGIBLE).length;
@@ -72,6 +75,23 @@ const getAdminGroupAnalytics = async (groupId) => {
   const penaltyAwardPool = allPayments.reduce((s, p) => s + (p.penaltyWaived ? 0 : p.penaltyAmount), 0);
   const totalPenalties = penaltyAwardPool;
   const awardPerOnTimeMember = onTimeMembers > 0 ? Math.round(penaltyAwardPool / onTimeMembers) : 0;
+
+  // ── Calendar info for the current cycle month ──────────────────────────────
+  const currentMonthInfo = currentMonthlyCycle ? {
+    monthNumber,
+    monthName: getMonthName(currentMonthlyCycle.calendarMonth),
+    calendarMonth: currentMonthlyCycle.calendarMonth,
+    year: currentMonthlyCycle.calendarYear,
+    startDate: currentMonthlyCycle.startDate,
+    endDate: currentMonthlyCycle.endDate,
+    dueDate: currentMonthlyCycle.dueDate,
+    label: `Month ${monthNumber} \u2014 ${getMonthName(currentMonthlyCycle.calendarMonth)} ${currentMonthlyCycle.calendarYear}`,
+  } : null;
+
+  // ── Collection-window reminder based on today's real date ──────────────────
+  const collectionWindowStatus = currentMonthlyCycle
+    ? getCollectionWindowStatus(new Date(), currentMonthlyCycle, 3)
+    : null;
 
   return {
     groupName: group.name,
@@ -90,6 +110,8 @@ const getAdminGroupAnalytics = async (groupId) => {
     awardPerOnTimeMember,
     recentWinners: spinResults,
     completionPercent: Math.round((wonSlots / group.slotCount) * 100),
+    currentMonthInfo,
+    collectionWindowStatus,
   };
 };
 

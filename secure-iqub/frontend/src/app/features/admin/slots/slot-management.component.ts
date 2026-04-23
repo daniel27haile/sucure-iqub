@@ -49,11 +49,16 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
           <mat-card-content>
             <!-- Members in slot -->
             <div class="slot-members" *ngIf="slot.members?.length > 0">
-              <div class="member-row" *ngFor="let m of slot.members">
+              <div class="member-row" *ngFor="let m of slot.members" [class.member-row--leader]="slot.leader === m.member._id">
                 <div class="member-info">
                   <div class="member-avatar">{{ m.member.firstName[0] }}{{ m.member.lastName[0] }}</div>
                   <div>
-                    <div class="member-name">{{ m.member.firstName }} {{ m.member.lastName }}</div>
+                    <div class="member-name">
+                      {{ m.member.firstName }} {{ m.member.lastName }}
+                      <span class="leader-chip" *ngIf="slot.leader === m.member._id">
+                        <mat-icon>star</mat-icon> Leader
+                      </span>
+                    </div>
                     <div class="member-email">{{ m.member.email }}</div>
                   </div>
                 </div>
@@ -64,6 +69,31 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
                     <mat-icon>close</mat-icon>
                   </button>
                 </div>
+              </div>
+            </div>
+
+            <!-- Leader assignment (shown when 2+ members share this slot) -->
+            <div class="leader-section" *ngIf="slot.members?.length >= 2">
+              <div class="leader-section-title">
+                <mat-icon>star</mat-icon>
+                <span>Slot Leader <span class="leader-hint">— designates who coordinates the $2,000 goal</span></span>
+              </div>
+              <div class="leader-select-row">
+                <mat-form-field appearance="outline" class="leader-select">
+                  <mat-label>Select Leader</mat-label>
+                  <mat-select [(ngModel)]="leaderSelections[slot._id]">
+                    <mat-option *ngFor="let m of slot.members" [value]="m.member._id">
+                      {{ m.member.firstName }} {{ m.member.lastName }}
+                      <span *ngIf="slot.leader === m.member._id"> ★ current</span>
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+                <button mat-raised-button class="leader-btn"
+                  [disabled]="!leaderSelections[slot._id] || settingLeader[slot._id]"
+                  (click)="setLeader(slot)">
+                  <mat-icon>star</mat-icon>
+                  {{ settingLeader[slot._id] ? 'Saving...' : 'Set Leader' }}
+                </button>
               </div>
             </div>
 
@@ -132,41 +162,84 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
     </ng-container>
   `,
   styles: [`
-    .page-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; }
+    .page-header { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
     h1 { font-size: 22px; font-weight: 700; margin: 0 0 2px; color: #1a237e; }
     .subtitle { margin: 0; color: #666; font-size: 13px; }
     .progress-card { margin-bottom: 24px; }
-    .progress-header { display: flex; justify-content: space-between; margin-bottom: 8px; }
+    .progress-header { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 4px; margin-bottom: 8px; }
     .progress-title { font-weight: 600; }
     .progress-count { color: #1565c0; font-weight: 600; }
     .progress-total { font-size: 12px; color: #888; margin-top: 8px; }
-    .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 20px; margin-bottom: 24px; }
+
+    /* Slots grid */
+    .slots-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-bottom: 24px; }
     .slot-card { transition: box-shadow .2s; }
     .slot-card--valid { border-top: 3px solid #4caf50; }
     .slot-card--eligible { border-top: 3px solid #4caf50; }
     .slot-card--won { border-top: 3px solid #9c27b0; opacity: .8; }
     .slot-card--pending { border-top: 3px solid #bbb; }
     .slot-card--invalid { border-top: 3px solid #f44336; }
-    .slot-card--new { cursor: pointer; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; min-height: 120px; }
+    .slot-card--new { cursor: pointer; border: 2px dashed #bbb; display: flex; align-items: center; justify-content: center; min-height: 100px; }
     .slot-card--new:hover { border-color: #1565c0; }
     .add-slot-content { display: flex; flex-direction: column; align-items: center; gap: 8px; color: #999; font-size: 14px; }
     .add-slot-content mat-icon { font-size: 40px; width: 40px; height: 40px; }
     .slot-number { width: 36px; height: 36px; border-radius: 50%; background: #1a237e; color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; }
+
+    /* Members in slot */
     .slot-members { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
-    .member-row { display: flex; align-items: center; justify-content: space-between; }
-    .member-info { display: flex; align-items: center; gap: 10px; }
-    .member-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e8eaf6; color: #3949ab; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
-    .member-name { font-size: 13px; font-weight: 600; }
-    .member-email { font-size: 11px; color: #888; }
-    .member-amount { display: flex; align-items: center; gap: 4px; }
+    .member-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .member-info { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .member-avatar { width: 32px; height: 32px; border-radius: 50%; background: #e8eaf6; color: #3949ab; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .member-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .member-email { font-size: 11px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .member-amount { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     .share-pct { font-size: 11px; color: #888; }
+
+    /* Add member form */
     .add-member-form form { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; margin-top: 12px; }
-    .member-select { flex: 1; min-width: 180px; }
-    .amount-field { width: 120px; }
+    .member-select { flex: 1; min-width: 160px; }
+    .amount-field { width: 110px; }
     .slot-funded-badge { display: flex; align-items: center; gap: 6px; color: #2e7d32; font-size: 13px; font-weight: 600; margin-top: 8px; }
+    /* Leader row highlight */
+    .member-row--leader { background: #fffde7; border-radius: 8px; padding: 4px 6px; margin: -4px -6px; }
+    .leader-chip { display: inline-flex; align-items: center; gap: 2px; background: #fff9c4;
+      color: #f57f17; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 10px;
+      margin-left: 6px; vertical-align: middle; }
+    .leader-chip mat-icon { font-size: 12px; width: 12px; height: 12px; }
+
+    /* Leader section */
+    .leader-section { margin: 10px 0 4px; padding: 12px; background: #f9f4ff;
+      border: 1px solid #e1bee7; border-radius: 10px; }
+    .leader-section-title { display: flex; align-items: center; gap: 6px; font-size: 12px;
+      font-weight: 700; color: #7b1fa2; margin-bottom: 10px; }
+    .leader-section-title mat-icon { font-size: 16px; width: 16px; height: 16px; color: #ffd700; }
+    .leader-hint { font-weight: 400; color: #9c64a6; font-size: 11px; }
+    .leader-select-row { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+    .leader-select { flex: 1; min-width: 160px; }
+    .leader-btn { background: linear-gradient(135deg, #6a1b9a, #8e24aa) !important;
+      color: white !important; height: 40px; font-size: 13px !important;
+      border-radius: 8px !important; white-space: nowrap; align-self: center; margin-top: 4px; }
+
     .add-slot-card { margin-bottom: 24px; }
     .add-slot-form { display: flex; flex-direction: column; gap: 12px; }
-    .form-actions { display: flex; gap: 12px; }
+    .form-actions { display: flex; gap: 12px; flex-wrap: wrap; }
+
+    /* ── Mobile ── */
+    @media (max-width: 768px) {
+      h1 { font-size: 19px; }
+      .slots-grid { grid-template-columns: 1fr; gap: 14px; }
+      .member-select { min-width: 100%; }
+      .amount-field { width: 100%; }
+      .add-member-form form { flex-direction: column; }
+      .leader-select-row { flex-direction: column; }
+      .leader-select { min-width: 100%; }
+      .leader-btn { width: 100%; margin-top: 0; }
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 17px; }
+      .member-email { display: none; }
+    }
   `],
 })
 export class SlotManagementComponent implements OnInit {
@@ -179,6 +252,8 @@ export class SlotManagementComponent implements OnInit {
   showAddSlotForm = false;
   addSlotForm!: FormGroup;
   addMemberForms: Record<string, FormGroup> = {};
+  leaderSelections: Record<string, string> = {};
+  settingLeader: Record<string, boolean> = {};
 
   constructor(
     private route: ActivatedRoute, private api: ApiService,
@@ -203,7 +278,11 @@ export class SlotManagementComponent implements OnInit {
         this.groupName = res.data.group.name;
         this.slots = res.data.slots;
         this.groupLocked = res.data.group.status !== 'draft';
-        this.slots.forEach((s) => this.initAddForm(s._id));
+        this.slots.forEach((s) => {
+          this.initAddForm(s._id);
+          // Pre-populate leader selection with current leader if set
+          if (s.leader) this.leaderSelections[s._id] = s.leader;
+        });
         this.loading = false;
         this.loadMembers();
       },
@@ -212,10 +291,9 @@ export class SlotManagementComponent implements OnInit {
   }
 
   loadMembers(): void {
-    this.api.listGroupMembers(this.groupId).subscribe({
-      next: (res) => { this.availableMembers = (res.data || []).map((c: any) => c.member).filter((m: any) => m); },
+    this.api.getAllMembers().subscribe({
+      next: (res) => { this.availableMembers = res.data || []; },
     });
-    // Also fetch all platform members via invite flow (simplified)
   }
 
   initAddForm(slotId: string): void {
@@ -248,6 +326,23 @@ export class SlotManagementComponent implements OnInit {
     this.api.assignMemberToSlot(this.groupId, slot._id, form.value).subscribe({
       next: () => { this.toast.success('Member added to slot'); form.reset(); this.loadData(); },
       error: (err) => { this.toast.error(err.error?.message || 'Failed to add member'); },
+    });
+  }
+
+  setLeader(slot: any): void {
+    const memberId = this.leaderSelections[slot._id];
+    if (!memberId) return;
+    this.settingLeader[slot._id] = true;
+    this.api.setSlotLeader(this.groupId, slot._id, memberId).subscribe({
+      next: (res) => {
+        this.settingLeader[slot._id] = false;
+        this.toast.success(`Leader set: ${res.data.leaderName}`);
+        this.loadData();
+      },
+      error: (err) => {
+        this.settingLeader[slot._id] = false;
+        this.toast.error(err.error?.message || 'Failed to set leader');
+      },
     });
   }
 

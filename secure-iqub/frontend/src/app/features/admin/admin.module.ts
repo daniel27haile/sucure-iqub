@@ -7,6 +7,7 @@ import { GroupListComponent } from './groups/group-list.component';
 import { GroupDetailComponent } from './groups/group-detail.component';
 import { CreateGroupComponent } from './groups/create-group.component';
 import { SlotManagementComponent } from './slots/slot-management.component';
+import { SharedSlotBuilderComponent } from './slots/shared-slot-builder.component';
 import { MonthlyCollectionComponent } from './payments/monthly-collection.component';
 import { LuckySpinComponent } from './spin/lucky-spin.component';
 
@@ -31,6 +32,7 @@ const routes: Routes = [
   declarations: [
     AdminLayoutComponent, AdminDashboardComponent, GroupListComponent,
     GroupDetailComponent, CreateGroupComponent, SlotManagementComponent,
+    SharedSlotBuilderComponent,
     MonthlyCollectionComponent, LuckySpinComponent,
   ],
   imports: [SharedModule, RouterModule.forChild(routes)],

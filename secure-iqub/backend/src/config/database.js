@@ -6,11 +6,13 @@ const logger = require('../utils/logger');
 const connectDB = async () => {
   try {
     const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 10000,
     });
     logger.info(`MongoDB connected: ${conn.connection.host}`);
   } catch (error) {
-    logger.error('MongoDB connection error:', error.message);
+    // Pass a single string so Winston's printf format prints the full message
+    logger.error(`MongoDB connection error: ${error.message}`);
     process.exit(1);
   }
 };

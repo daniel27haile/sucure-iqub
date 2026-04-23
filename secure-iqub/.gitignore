@@ -29,3 +29,5 @@ backend/uploads/
 # IDE
 .vscode/
 .idea/
+../README.md
+

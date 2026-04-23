@@ -26,6 +26,15 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
       </ng-container>
     </div>
 
+    <!-- Suspended banner — only when the group is genuinely suspended in the database -->
+    <div class="suspended-banner" *ngIf="!loading && group?.status === 'suspended'">
+      <mat-icon>pause_circle</mat-icon>
+      <div>
+        <strong>This group has been paused by Super Admin.</strong>
+        <span>Ask your Super Admin to reactivate it from the All Groups management page.</span>
+      </div>
+    </div>
+
     <app-loading-spinner *ngIf="loading"></app-loading-spinner>
 
     <ng-container *ngIf="!loading && group">
@@ -121,6 +130,14 @@ import { ConfirmDialogComponent } from '../../../shared/components/confirm-dialo
     .page-header { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
     h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; color: #1a237e; }
     .spacer { flex: 1; }
+    .suspended-banner {
+      display: flex; align-items: flex-start; gap: 10px;
+      background: #fff3e0; border: 1px solid #ffb300; border-radius: 10px;
+      padding: 14px 16px; margin-bottom: 20px; color: #e65100;
+    }
+    .suspended-banner mat-icon { font-size: 22px; width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px; }
+    .suspended-banner strong { display: block; font-size: 14px; }
+    .suspended-banner span { font-size: 12px; color: #bf360c; }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .requirements-card, .slots-card { margin-bottom: 24px; }
     .req-list { display: flex; flex-direction: column; gap: 12px; padding: 8px 0; }

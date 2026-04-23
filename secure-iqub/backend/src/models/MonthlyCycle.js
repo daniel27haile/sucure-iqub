@@ -24,6 +24,9 @@ const monthlyCycleSchema = new mongoose.Schema(
     // Actual calendar year/month this cycle month maps to
     calendarYear: { type: Number, required: true },
     calendarMonth: { type: Number, required: true, min: 1, max: 12 }, // 1=Jan
+    // Real calendar boundaries for this cycle month
+    startDate: { type: Date },   // first day of the calendar month (e.g. Jan 1 2026)
+    endDate: { type: Date },     // last day of the calendar month  (e.g. Jan 31 2026)
     dueDate: { type: Date, required: true },
     status: {
       type: String,

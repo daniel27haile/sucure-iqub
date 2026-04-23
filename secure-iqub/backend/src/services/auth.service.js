@@ -32,8 +32,14 @@ const login = async ({ email, password }, req) => {
     throw err;
   }
 
+  if (user.isDeleted) {
+    const err = new Error('This account has been deleted. Please contact Super Admin.');
+    err.statusCode = 403;
+    throw err;
+  }
+
   if (!user.isActive) {
-    const err = new Error('Account deactivated. Contact support.');
+    const err = new Error('Your account has been suspended. Please contact Super Admin.');
     err.statusCode = 403;
     throw err;
   }

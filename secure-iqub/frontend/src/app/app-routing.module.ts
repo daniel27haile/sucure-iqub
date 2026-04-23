@@ -4,7 +4,12 @@ import { AuthGuard } from './core/guards/auth.guard';
 import { GuestGuard } from './core/guards/guest.guard';
 
 const routes: Routes = [
-  { path: '', redirectTo: '/auth/login', pathMatch: 'full' },
+  { path: '', redirectTo: '/landing', pathMatch: 'full' },
+
+  {
+    path: 'landing',
+    loadChildren: () => import('./features/landing/landing.module').then((m) => m.LandingModule),
+  },
 
   {
     path: 'auth',

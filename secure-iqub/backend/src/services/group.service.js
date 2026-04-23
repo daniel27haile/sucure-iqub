@@ -213,11 +213,15 @@ const activateCycle = async (groupId, adminId, { startDate }, req) => {
     cycleDate.setMonth(cycleDate.getMonth() + i);
     const dueDate = new Date(cycleDate.getFullYear(), cycleDate.getMonth(), group.dueDay);
 
+    const yr = cycleDate.getFullYear();
+    const mo = cycleDate.getMonth(); // 0-indexed
     monthlyDocs.push({
       group: groupId,
       monthNumber: i + 1,
-      calendarYear: cycleDate.getFullYear(),
-      calendarMonth: cycleDate.getMonth() + 1,
+      calendarYear: yr,
+      calendarMonth: mo + 1,                             // 1-indexed
+      startDate: new Date(yr, mo, 1),                    // first day of the calendar month
+      endDate: new Date(yr, mo + 1, 0, 23, 59, 59, 999), // last day of the calendar month
       dueDate,
       expectedAmount: SLOT.PAYOUT_AMOUNT, // 12 × $2,000 = $24,000
     });
